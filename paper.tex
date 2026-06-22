@@ -1,0 +1,98 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+% GFS SOSP'03 translation template.
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage[UTF8,fontset=fandol]{ctex}
+  \usepackage{fontspec}
+  % 原 PDF：正文 Times，标题与作者区 Helvetica，数学为 Computer Modern。
+  % Nimbus Roman / Sans 分别是 Times / Helvetica 的度量兼容 Type 1 替代。
+  \setmainfont{NimbusRoman-Regular.otf}[
+    Path=/usr/share/fonts/opentype/urw-base35/,
+    BoldFont=NimbusRoman-Bold.otf,
+    ItalicFont=NimbusRoman-Italic.otf,
+    BoldItalicFont=NimbusRoman-BoldItalic.otf]
+  \setsansfont{NimbusSans-Regular.otf}[
+    Path=/usr/share/fonts/opentype/urw-base35/,
+    BoldFont=NimbusSans-Bold.otf,
+    ItalicFont=NimbusSans-Italic.otf,
+    BoldItalicFont=NimbusSans-BoldItalic.otf]
+  \setmonofont{DejaVu Sans Mono}
+\else
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{times}
+  \usepackage{helvet}
+\fi
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{abstract}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+
+% 原论文的参考文献采用比正文更小、更紧凑的 Times 排版。
+\AtBeginEnvironment{thebibliography}{%
+  \small
+  \setlength{\itemsep}{0pt plus 0.1pt}%
+  \setlength{\parskip}{0pt}%
+  \setlength{\parsep}{0pt}%
+  \renewcommand{\baselinestretch}{0.88}\selectfont
+}
+
+\geometry{paper=letterpaper,top=0.78in,bottom=0.86in,left=0.76in,right=0.76in,columnsep=0.28in}
+\raggedbottom
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\setlength{\textfloatsep}{9pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt,parsep=0pt}
+% 明确区分三级标题：section > subsection > subsubsection。
+\titlespacing*{\section}{0pt}{2.0ex plus .3ex minus .2ex}{0.85ex}
+\titlespacing*{\subsection}{0pt}{1.55ex plus .25ex minus .15ex}{0.65ex}
+\titlespacing*{\subsubsection}{0pt}{1.15ex plus .2ex minus .1ex}{0.45ex}
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{0.7em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.75em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize}{\thesubsubsection}{0.8em}{}
+\captionsetup{font=small,labelfont=bf,labelsep=period,justification=raggedright,singlelinecheck=false}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\absnamepos}{flushleft}
+\renewcommand{\abstractnamefont}{\normalfont\Large\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\normalsize}
+\setlength{\absleftindent}{0pt}
+\setlength{\absrightindent}{0pt}
+\setlength{\abstitleskip}{-0.3em}
+\pagestyle{empty}
+
+\newcommand{\papertitle}{The Google File System}
+\newcommand{\paperauthors}{Sanjay Ghemawat, Howard Gobioff, and Shun-Tak Leung}
+\newcommand{\paperaffiliation}{\sffamily Google\textsuperscript{*}}
+\title{\vspace{-0.27in}\sffamily\bfseries\fontsize{18}{22}\selectfont\papertitle}
+\author{\sffamily\large \paperauthors\\[0.35em]\large \paperaffiliation}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\input{sections/00-abstract}
+\input{sections/01-introduction}
+\input{sections/02-design-overview}
+\input{sections/03-system-interactions}
+\input{sections/04-master-operation}
+\input{sections/05-fault-tolerance}
+\input{sections/06-measurement}
+\input{sections/07-experiences}
+\input{sections/08-related-work}
+\input{sections/09-conclusions}
+\input{sections/acknowledge}
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}
