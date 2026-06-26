@@ -139,12 +139,18 @@ chunkserver收到一部分数据，就会立即开始转发。流水线对我们
 GFS提供了一种称为\textbf{record append}的原子追加操作。在传统写入中，
 客户端指定数据要写入的offset。对同一区域的并发写入无法串行化：该区域
 最终可能包含来自多个客户端的数据片段。
-而在\textbf{record append}中，客户端只指定数据。GFS会在它选择的offset处，至少一次
-原子地将数据追加到文件中(即作为一段连续字节序列)，并将该offset返回给
-客户端。这类似于在Unix中向以O\_APPEND模式打开的文件写入数据，但不会出现
-多个写入者并发写入时的竞争条件。\emph{(译者注：这里作者实际是在说Unix O\_APPEND
-文件写入和GFS的record append语义相似，都是原子追加。注意读者不要理解成
-Unix O\_APPEND是非原子的)}
+而在\textbf{record append}中，客户端只指定数据。GFS会在它选择的offset处，
+\textbf{至少一次}原子地将数据追加到文件中(即作为一段连续字节序列)，
+并将该offset返回给客户端。这类似于在Unix中向以O\_APPEND模式打开的文件写入
+数据，即使是多个writer并发写入，也不会出现竞争而产生的“交叉文本”。
+\\\emph{(译者注：这里作者实际是在说Unix O\_APPEND文件写入和GFS
+的record append语义相似，都是原子追加。然而，其实GFS的语义又
+和Unix O\_APPEND不完全一样。第一点是GFS的record append保证的是
+\textbf{至少一次}，也就是两个线程并发追加内容，一个写hello，一个写world，
+那么真实在GFS里面的内容可能是hellohelloworld，或者helloworldhelloworld。
+你看，它虽然保证了一个record原子被插入，但是是多少次呢？答案是GFS只保证一次。而且
+最需要注意的是，插入后也许在chunk server不同的机器上读，会读出不同的结果。
+这里埋下伏笔，我将在后续提到这个badcase。这个“乱序问题”很微妙，但是也可以被解决)}
 
 \textbf{record append}被我们的分布式应用大量使用：不同机器上的许多客户端会并发向同一
 文件追加数据。如果使用传统写入，它们就需要额外进行复杂且昂贵的同步，
@@ -194,6 +200,18 @@ replica可能包含不同数据，也可能全部或部分包含同一\textbf{re
 按照我们的一致性保证，成功的\textbf{record append}操作写入数据的区域是已定义的
 (因此也是一致的)，而其间的区域则是inconsistent的(因此也是未定义的)。正如
 section2.7.2所讨论的，我们的应用可以处理inconsistent区域。
+\\\emph{译者注：回收之前的伏笔。读者可以去看Youtube观看Raft2020 Lec3 GFS视频，
+在1h10分处它讲解了一个由于失败重试，导致的“乱序问题”，它是一个很神奇的badcase。
+\\在真实的应用中，我们会使用append record
+来做追加的数据写入，读取则是从头读到已consistent的区域，然后从头到尾扫描“自标识”特征来识别record
+——这样可以剔除无用padding或者record之间的garbage信息。但是这里教授的例子
+很微妙，它描述了一种非常奇妙的现象：多个writer append record同一个GFS File时，假如一次写入尝试因为
+“只有部分replica成功append”而失败，后续客户端重试，会留下“脏数据”，而这个脏数据也是合理的自标识数据。
+因此，就算业务层自己做了record自标识识别，也做了去重，但是在不同的机器可能会消费到不同的record顺序。
+所以怎么解决呢？一是可以干脆就不让多人写一个GFS文件了，事实上HDFS就是这么做的，它将lease做到了客户端和
+master上，保证同时只有一个客户端向一个文件append；二是可以改造GFS，我可以提供一些想法：可以尝试
+让所有机器都成为primary的复制状态机，每当primary上任的时候，强制让其它secondary同步自己经历过的mutation，
+不允许出现分岔。读者可以多思考思考复制状态机以及Raft的No-op Entry优化，从这两个角度入手改造GFS。}
 
 \subsection{\textbf{snapshot}}
 \textbf{snapshot}操作几乎可以瞬时创建一个文件或目录树(即“source”)的replica，同时尽量
